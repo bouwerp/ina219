@@ -4,4 +4,7 @@ project(ina219)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
-add_library(ina219 ina219.cc i2c.cc)
+include_directories("../pigpio")
+link_directories("../pigpio")
+
+add_library(ina219 ina219.cc)
