@@ -127,13 +127,11 @@ public:
 
 private:
     int _i2c_handle;
-
     uint8_t ina219_i2caddr;
     uint16_t ina219_calValue;
     uint16_t ina219_configValue;
     uint32_t ina219_currentDivider_mA;
     float ina219_powerMultiplier_mW;
-
     void wireWriteRegister(uint8_t reg, uint16_t value);
     void wireReadRegister(uint8_t reg, uint16_t *value);
 };
