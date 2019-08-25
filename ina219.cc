@@ -1,4 +1,3 @@
-#include <iostream>
 #include <unistd.h>
 #include "ina219.h"
 #include "pigpio.h"
@@ -52,48 +51,53 @@ Adafruit_INA219::Adafruit_INA219(uint8_t addr) {
     gpioInitialise();
     _i2c_handle = i2cOpen(1, addr, 0);
     ina219_i2caddr = addr;
-    ina219_currentMultiplier_mA = 1.0f;
-    ina219_powerMultiplier_mW = 1.0f;
+    ina219_currentDivider_mA = 0;
+    ina219_powerMultiplier_mW = 0;
 }
 
 /*!
  *  @brief  Gets the raw bus voltage (16-bit signed integer, so +-32767)
  *  @return the raw bus voltage reading
  */
-int16_t Adafruit_INA219::getBusVoltage_raw() {
+uint16_t Adafruit_INA219::getBusVoltage_raw() {
     uint16_t value;
     wireReadRegister(INA219_REG_BUSVOLTAGE, &value);
-    return (int16_t)((value >> 3) * 4);
+    // flip MSB and LSB
+    value = ((value & 0xFF00u) >> 8u) + ((value & 0x00FFu) << 8u);
+    // remove OVF and CNVR bits and shift right to adjust
+    return (int16_t)((value & 0xFFF8u) >> 1u);
 }
 
 /*!
  *  @brief  Gets the raw shunt voltage (16-bit signed integer, so +-32767)
  *  @return the raw shunt voltage reading
  */
-int16_t Adafruit_INA219::getShuntVoltage_raw() {
+uint16_t Adafruit_INA219::getShuntVoltage_raw() {
     uint16_t value;
     wireReadRegister(INA219_REG_SHUNTVOLTAGE, &value);
-    return (int16_t)value;
+    // flip MSB and LSB
+    value = ((value & 0xFF00u) >> 8u) + ((value & 0x00FFu) << 8u);
+    return (uint16_t)(value);
 }
 
 /*!
  *  @brief  Gets the raw current value (16-bit signed integer, so +-32767)
  *  @return the raw current reading
  */
-int16_t Adafruit_INA219::getCurrent_raw() {
+uint16_t Adafruit_INA219::getCurrent_raw() {
     uint16_t value;
     wireReadRegister(INA219_REG_CURRENT, &value);
-    return (int16_t)value;
+    return (uint16_t)value;
 }
 
 /*!
  *  @brief  Gets the raw power value (16-bit signed integer, so +-32767)
  *  @return raw power reading
  */
-int16_t Adafruit_INA219::getPower_raw() {
+uint16_t Adafruit_INA219::getPower_raw() {
     uint16_t value;
     wireReadRegister(INA219_REG_POWER, &value);
-    return (int16_t)value;
+    return (uint16_t)value;
 }
 
 /*!
@@ -101,7 +105,7 @@ int16_t Adafruit_INA219::getPower_raw() {
  *  @return the shunt voltage converted to millivolts
  */
 float Adafruit_INA219::getShuntVoltage_mV() {
-    int16_t value;
+    uint16_t value;
     value = getShuntVoltage_raw();
     return value * 0.01;
 }
@@ -111,8 +115,8 @@ float Adafruit_INA219::getShuntVoltage_mV() {
  *  @return the bus voltage converted to volts
  */
 float Adafruit_INA219::getBusVoltage_V() {
-    int16_t value = getBusVoltage_raw();
-    return value * 0.001;
+    uint16_t value = getBusVoltage_raw();
+    return ((float)value)*0.001;
 }
 
 /*!
@@ -122,7 +126,7 @@ float Adafruit_INA219::getBusVoltage_V() {
  */
 float Adafruit_INA219::getCurrent_mA() {
     float valueDec = getCurrent_raw();
-    valueDec *= ina219_currentMultiplier_mA;
+    valueDec /= ina219_currentDivider_mA;
     return valueDec;
 }
 
@@ -135,4 +139,17 @@ float Adafruit_INA219::getPower_mW() {
     float valueDec = getPower_raw();
     valueDec *= ina219_powerMultiplier_mW;
     return valueDec;
+}
+
+void Adafruit_INA219::setCalibration(uint16_t calibration, uint32_t currentDivider, float powerMultiplier) {
+    ina219_currentDivider_mA = currentDivider;
+    ina219_powerMultiplier_mW = powerMultiplier;
+    ina219_calValue = calibration;
+    wireWriteRegister(INA219_REG_CALIBRATION, calibration);
+
+}
+
+void Adafruit_INA219::setConfiguration(uint16_t configuration) {
+    ina219_configValue = configuration;
+    wireWriteRegister(INA219_REG_CONFIG, configuration);
 }

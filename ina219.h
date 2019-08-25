@@ -24,8 +24,8 @@
 
 /** bus voltage range values **/
 enum {
-    INA219_CONFIG_BVOLTAGERANGE_16V = (0x0000), // 0-16V Range
-    INA219_CONFIG_BVOLTAGERANGE_32V = (0x2000), // 0-32V Range
+    INA219_CONFIG_BVOLTAGERANGE_16V = (0x0000u), // 0-16V Range
+    INA219_CONFIG_BVOLTAGERANGE_32V = (0x2000u), // 0-32V Range
 };
 
 /** mask for gain bits **/
@@ -33,10 +33,10 @@ enum {
 
 /** values for gain bits **/
 enum {
-    INA219_CONFIG_GAIN_1_40MV = (0x0000),  // Gain 1, 40mV Range
-    INA219_CONFIG_GAIN_2_80MV = (0x0800),  // Gain 2, 80mV Range
-    INA219_CONFIG_GAIN_4_160MV = (0x1000), // Gain 4, 160mV Range
-    INA219_CONFIG_GAIN_8_320MV = (0x1800), // Gain 8, 320mV Range
+    INA219_CONFIG_GAIN_1_40MV = (0x0000u),  // Gain 1, 40mV Range
+    INA219_CONFIG_GAIN_2_80MV = (0x0800u),  // Gain 2, 80mV Range
+    INA219_CONFIG_GAIN_4_160MV = (0x1000u), // Gain 4, 160mV Range
+    INA219_CONFIG_GAIN_8_320MV = (0x1800u), // Gain 8, 320mV Range
 };
 
 /** mask for bus ADC resolution bits **/
@@ -118,21 +118,24 @@ public:
     float getCurrent_mA();
     float getPower_mW();
     void powerSave(bool on);
+    void setCalibration(uint16_t, uint32_t, float);
+    void setConfiguration(uint16_t);
+    uint16_t getBusVoltage_raw();
+    uint16_t getShuntVoltage_raw();
+    uint16_t getCurrent_raw();
+    uint16_t getPower_raw();
 
 private:
     int _i2c_handle;
 
     uint8_t ina219_i2caddr;
-    uint32_t ina219_calValue;
-    uint32_t ina219_currentMultiplier_mA;
+    uint16_t ina219_calValue;
+    uint16_t ina219_configValue;
+    uint32_t ina219_currentDivider_mA;
     float ina219_powerMultiplier_mW;
 
     void wireWriteRegister(uint8_t reg, uint16_t value);
     void wireReadRegister(uint8_t reg, uint16_t *value);
-    int16_t getBusVoltage_raw();
-    int16_t getShuntVoltage_raw();
-    int16_t getCurrent_raw();
-    int16_t getPower_raw();
 };
 
 #endif
